@@ -1,10 +1,13 @@
 package org.heisenberg.springframework.beans.factory.config;
 
-import org.heisenberg.springframework.beans.PropertyValue;
 import org.heisenberg.springframework.beans.PropertyValues;
 
 import java.util.Objects;
 
+/**
+ * BeanDefinition实例报错了Bean的信息，包括Bean的class类型，构造参数
+ * bean属性、bean
+ */
 public class BeanDefinition {
     public static String SCOPE_SINGLETON = "singleton";
 
@@ -13,7 +16,7 @@ public class BeanDefinition {
     /**
      * bean 类型
      */
-    private Class beanClass;
+    private Class<?> beanClass;
 
     private PropertyValues propertyValues;
 
