@@ -2,6 +2,7 @@ package org.heisenberg.springframework.bean.factory.support;
 
 import org.heisenberg.springframework.bean.BeansException;
 import org.heisenberg.springframework.bean.factory.FactoryBean;
+import org.heisenberg.springframework.bean.factory.config.BeanDefinition;
 import org.heisenberg.springframework.bean.factory.config.BeanPostProcessor;
 import org.heisenberg.springframework.bean.factory.config.ConfigurableBeanFactory;
 import org.heisenberg.springframework.core.ConversionService;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static net.sf.cglib.proxy.Mixin.createBean;
 
 public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
@@ -25,11 +28,15 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
 
     @Override
     public Object getBean(String name) throws BeansException {
-        Object sharedInstance = this.getSingleton(name);
+        Object sharedInstance = getSingleton(name);
         if (sharedInstance != null) {
+            //如果是FactoryBean，从FactoryBean#getObject中创建bean
             return getObjectForBeanInstance(sharedInstance, name);
         }
-        return null;
+
+        BeanDefinition beanDefinition = getBeanDefinition(name);
+        Object bean = createBean(name, beanDefinition);
+        return getObjectForBeanInstance(bean, name);
     }
 
     /**
@@ -39,7 +46,7 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
      * @return
      * @throws Exception
      */
-    protected Object getObjectForBeanInstance(Object beanInstance, String beanName) throws Exception {
+    protected Object getObjectForBeanInstance(Object beanInstance, String beanName) {
         Object object = beanInstance;
         if (beanInstance instanceof FactoryBean<?>) {
             FactoryBean factoryBean = (FactoryBean) beanInstance;
@@ -65,6 +72,14 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
 
     @Override
     public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
-        return null;
+        return ((T) getBean(name));
     }
+
+    @Override
+    public boolean containsBean(String name) {
+        return containsBeanDefinition(name);
+    }
+
+    protected abstract boolean containsBeanDefinition(String beanName);
+
 }
