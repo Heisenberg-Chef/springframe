@@ -1,8 +1,8 @@
 package org.heisenberg.springframework.util;
 
+
 /**
- * @author derekyi
- * @date 2020/12/27
+ * 字符串转化器
  */
 public interface StringValueResolver {
 
