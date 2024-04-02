@@ -5,6 +5,9 @@ import org.heisenberg.springframework.bean.factory.config.BeanDefinition;
 
 import java.lang.reflect.Constructor;
 
+/**
+ * 简单初始化策略，主要是根据Bean的构造函数进行初始化
+ */
 public class SimpleInstantiationStrategy implements InstantiationStrategy {
 
     /**

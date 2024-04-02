@@ -15,12 +15,15 @@ import java.util.Map;
 
 import static net.sf.cglib.proxy.Mixin.createBean;
 
+/**
+ * Bean工厂 抽象类型，用来生产Bean
+ */
 public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry implements ConfigurableBeanFactory {
     private final List<BeanPostProcessor> beanPostProcessors = new ArrayList<>();
 
     private final Map<String, Object> factoryBeanObjectCache = new HashMap<>();
 
-    private final List<StringValueResolver> embeddedValueResolver = new ArrayList<>();
+    private final List<StringValueResolver> embeddedValueResolvers = new ArrayList<>();
     /**
      * 类型转化器
      */
@@ -41,6 +44,7 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
 
     /**
      * 如果是FactoryBean，那么从FactoryBean#getObject中创建bean
+     *
      * @param beanInstance
      * @param beanName
      * @return
@@ -82,4 +86,41 @@ public abstract class AbstractBeanFactory extends DefaultSingletonBeanRegistry i
 
     protected abstract boolean containsBeanDefinition(String beanName);
 
+    protected abstract Object createBean(String beanName, BeanDefinition beanDefinition) throws BeansException;
+
+    protected abstract BeanDefinition getBeanDefinition(String beanName) throws BeansException;
+
+    @Override
+    public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
+        //有则覆盖
+        this.beanPostProcessors.remove(beanPostProcessor);
+        this.beanPostProcessors.add(beanPostProcessor);
+    }
+
+    public List<BeanPostProcessor> getBeanPostProcessors() {
+        return this.beanPostProcessors;
+    }
+
+    public void addEmbeddedValueResolver(StringValueResolver valueResolver) {
+        this.embeddedValueResolvers.add(valueResolver);
+    }
+
+    public String resolveEmbeddedValue(String value) {
+        String result = value;
+        for (StringValueResolver resolver : this.embeddedValueResolvers) {
+            result = resolver.resolveStringValue(result);
+        }
+        return result;
+    }
+
+    @Override
+    public ConversionService getConversionService() {
+        return conversionService;
+    }
+
+    @Override
+    public void setConversionService(ConversionService conversionService) {
+        this.conversionService = conversionService;
+    }
+}
 }
