@@ -3,6 +3,10 @@ package org.heisenberg;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Proxy;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Hello world!
@@ -17,11 +21,15 @@ public class App {
         }
         return is;
     }
+
+
     public static void main(String[] args) throws IOException {
-        App app = new App();
+        URL url = new URL("file:C:\\Users\\A\\Desktop\\mini-spring-main\\pom.xml");
+        URLConnection urlConnection = url.openConnection(Proxy.NO_PROXY);
 
-        InputStream inputStream = app.getInputStream("./App.class");
-
-        System.out.println(inputStream);
+        InputStream inputStream = urlConnection.getInputStream();
+        byte[] bytes = inputStream.readAllBytes();
+        String s = new String(bytes);
+        System.out.println(s);
     }
 }
