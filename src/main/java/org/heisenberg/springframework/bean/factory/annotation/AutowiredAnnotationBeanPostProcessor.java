@@ -49,7 +49,7 @@ public class AutowiredAnnotationBeanPostProcessor implements InstantiationAwareB
 
     // 初始化方法执行之前执行
     @Override
-    public PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws BeansException {
+    public PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws Exception {
         // 处理@Value注解
         Class<?> clazz = bean.getClass(); //  得到实体类型的meta
         Field[] fields = clazz.getDeclaredFields(); // 得到所有的成员变量

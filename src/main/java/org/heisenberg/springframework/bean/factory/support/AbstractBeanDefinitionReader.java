@@ -5,13 +5,13 @@ import org.heisenberg.springframework.core.io.Resource;
 import org.heisenberg.springframework.core.io.ResourceLoader;
 
 public abstract class AbstractBeanDefinitionReader implements BeanDefinitionReader {
-    private final BeanDefinitionRegistry registry;
+//    private final BeanDefinitionRegistry registry;
 
     private ResourceLoader resourceLoader;
 
-    protected AbstractBeanDefinitionReader(BeanDefinitionRegistry registry) {
-        this(registry, new DefaultResourceLoader());
-    }
+//    protected AbstractBeanDefinitionReader(BeanDefinitionRegistry registry) {
+//        this(registry, new DefaultResourceLoader());
+//    }
 
     @Override
     public BeanDefinitionRegistry getRegistry() {
