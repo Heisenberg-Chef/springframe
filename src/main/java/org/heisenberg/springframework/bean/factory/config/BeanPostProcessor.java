@@ -3,7 +3,7 @@ package org.heisenberg.springframework.bean.factory.config;
 import org.heisenberg.springframework.bean.BeansException;
 
 /**
- * 用于修改实例化后的bean的修改扩展点
+ * bean的修改扩展点，有多种类继承该接口
  */
 public interface BeanPostProcessor {
     /**

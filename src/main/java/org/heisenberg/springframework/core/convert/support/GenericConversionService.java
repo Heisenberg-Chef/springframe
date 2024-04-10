@@ -6,6 +6,8 @@ import org.heisenberg.springframework.core.convert.converter.ConverterFactory;
 import org.heisenberg.springframework.core.convert.converter.ConverterRegistry;
 import org.heisenberg.springframework.core.convert.converter.GenericConverter;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,5 +39,23 @@ public class GenericConversionService implements ConversionService, ConverterReg
     @Override
     public void addConverter(GenericConverter converter) {
 
+    }
+
+    /**
+     * Self Function.
+     */
+    private static GenericConverter.ConvertiblePair getRequiredType(Object object) {
+        // return directly implements
+        Type[] types = object.getClass().getGenericInterfaces();
+        ParameterizedType parameterized = (ParameterizedType) types[0];
+        Type[] actualTypeArguments = parameterized.getActualTypeArguments();
+        Class<?> sourceType = (Class<?>) actualTypeArguments[0];
+        Class<?> targetType = (Class<?>) actualTypeArguments[1];
+        return new GenericConverter.ConvertiblePair(sourceType, targetType);
+    }
+
+    public static void main(String[] args) {
+        StringToNumberConverterFactory stringToNumberConverterFactory = new StringToNumberConverterFactory();
+        getRequiredType(stringToNumberConverterFactory);
     }
 }

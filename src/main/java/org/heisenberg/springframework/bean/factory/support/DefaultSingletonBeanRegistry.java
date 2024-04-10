@@ -30,6 +30,9 @@ public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
      */
     private Map<String, ObjectFactory<?>> singletonFactories = new HashMap<String, ObjectFactory<?>>();
 
+    /**
+     * Bean销毁函数
+     */
     private final Map<String, DisposableBean> disposableBeans = new HashMap<>();
 
     @Override
@@ -61,6 +64,11 @@ public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
         singletonFactories.put(beanName, singletonFactory);
     }
 
+    /**
+     * 注入Bean的销毁函数接口
+     * @param beanName
+     * @param bean
+     */
     public void registerDisposableBean(String beanName, DisposableBean bean) {
         disposableBeans.put(beanName, bean);
     }

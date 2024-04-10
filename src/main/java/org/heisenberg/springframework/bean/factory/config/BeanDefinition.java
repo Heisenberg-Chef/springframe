@@ -5,7 +5,7 @@ import org.heisenberg.springframework.bean.PropertyValues;
 import java.util.Objects;
 
 /**
- * BeanDefinition实例报错了Bean的信息，包括Bean的class类型，构造参数
+ * BeanDefinition实例保存Bean的信息，包括Bean的class类型，构造参数
  * bean属性、bean
  */
 public class BeanDefinition {
