@@ -6,7 +6,7 @@ import org.heisenberg.springframework.bean.factory.BeanFactory;
 public interface AutowireCapableBeanFactory extends BeanFactory {
 
     /**
-     * 初始化之前执行的BeanPostProcessors方法
+     * 执行BeanPostProcessors的postProcessBeforeInitialization方法
      *
      * @param existingBean
      * @param beanName
@@ -16,7 +16,7 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
     Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName) throws BeansException;
 
     /**
-     * 初始化之后执行BeanPostProcessors的方法
+     * 执行BeanPostProcessors的postProcessAfterInitialization方法
      *
      * @param existingBean
      * @param beanName

@@ -55,11 +55,19 @@ public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
 
     @Override
     public void addSingleton(String beanName, Object singletonObject) {
+        // 加入一个单例对象
         singletonObjects.put(beanName, singletonObject); // 1
+        // 删除预处理的
         earlySingletonObjects.remove(beanName); // 2
+        // 删除工厂类
         singletonFactories.remove(beanName); // 3
     }
 
+    /**
+     * 加入工厂类
+     * @param beanName
+     * @param singletonFactory
+     */
     protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
         singletonFactories.put(beanName, singletonFactory);
     }

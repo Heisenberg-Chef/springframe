@@ -22,7 +22,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     @Override
     protected Object createBean(String beanName, BeanDefinition beanDefinition) throws BeansException {
         // 如果bean需要代理对象，则直接返回代理对象
-
+        Object bean = resolveBeforeInstantiation(beanName, beanDefinition);
+        if (bean != null) {
+            return bean;
+        }
         return null;
     }
 
@@ -58,6 +61,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             }
         }
         return null;
+    }
+
+    protected Object doCreateBean(String beanName,BeanDefinition beanDefinition)
+    {
+        Object bean;
+
     }
 
 
