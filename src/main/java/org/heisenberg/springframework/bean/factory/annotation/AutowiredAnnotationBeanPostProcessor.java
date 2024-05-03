@@ -26,7 +26,13 @@ public class AutowiredAnnotationBeanPostProcessor implements InstantiationAwareB
         this.beanFactory = (ConfigurableListableBeanFactory) beanFactory;
     }
 
-
+    /**
+     *
+     * @param bean
+     * @param beanName
+     * @return
+     * @throws BeansException
+     */
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         return null;
@@ -46,7 +52,6 @@ public class AutowiredAnnotationBeanPostProcessor implements InstantiationAwareB
     public boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
         return false;
     }
-
     // 初始化方法执行之前执行
     @Override
     public PropertyValues postProcessPropertyValues(PropertyValues pvs, Object bean, String beanName) throws Exception {
@@ -73,16 +78,20 @@ public class AutowiredAnnotationBeanPostProcessor implements InstantiationAwareB
 
         // 处理@Autowired注解
         for (Field field : fields) {
+            // 得到Autowired
             Autowired autowiredAnno = field.getAnnotation(Autowired.class);
+            // 如果 有 标注Autowired注解的类
             if (autowiredAnno != null) {
                 Class<?> fieldType = field.getType();
                 String dependentBeanName = null;
                 Qualifier qualifierAnno = field.getAnnotation(Qualifier.class);
                 Object dependentBean = null;
+                // 有依赖注入名称
                 if (qualifierAnno != null) {
                     qualifierAnno.value();
                     dependentBean = beanFactory.getBean(dependentBeanName, fieldType);
                 } else {
+                    // 无依赖注入名称
                     dependentBean = beanFactory.getBean(fieldType);
                 }
                 BeanUtil.setFieldValue(bean, field.getName(), dependentBean);

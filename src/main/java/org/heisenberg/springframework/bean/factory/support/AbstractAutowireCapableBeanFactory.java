@@ -66,8 +66,38 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
     protected Object doCreateBean(String beanName,BeanDefinition beanDefinition)
     {
         Object bean;
-
+        try{
+            bean = createBeanInstance
+        }
     }
 
+
+    protected Object getEarlyBeanReference(String beanName,BeanDefinition beanDefinition,Object bean)
+    {
+        Object exposeObject = bean;
+        for (BeanPostProcessor bp : getBeanPostProcessors()) {
+            if(bp instanceof InstantiationAwareBeanPostProcessor)
+            {
+
+            }
+        }
+    }
+
+    /**
+     * 根据beanDefination
+     * @param beanDefinition
+     * @return
+     */
+    protected Object createBeanInstance(BeanDefinition beanDefinition)
+    {
+        return getInstantiationStrategy().instantiate(beanDefinition);
+    }
+    public InstantiationStrategy getInstantiationStrategy() {
+        return instantiationStrategy;
+    }
+
+    public void setInstantiationStrategy(InstantiationStrategy instantiationStrategy) {
+        this.instantiationStrategy = instantiationStrategy;
+    }
 
 }
