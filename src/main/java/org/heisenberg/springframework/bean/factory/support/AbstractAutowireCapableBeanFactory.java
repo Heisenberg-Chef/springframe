@@ -1,16 +1,16 @@
 package org.heisenberg.springframework.bean.factory.support;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.TypeUtil;
 import org.heisenberg.springframework.bean.BeansException;
 import org.heisenberg.springframework.bean.PropertyValue;
 import org.heisenberg.springframework.bean.PropertyValues;
 import org.heisenberg.springframework.bean.factory.InitializingBean;
 import org.heisenberg.springframework.bean.factory.ObjectFactory;
-import org.heisenberg.springframework.bean.factory.config.AutowireCapableBeanFactory;
-import org.heisenberg.springframework.bean.factory.config.BeanDefinition;
-import org.heisenberg.springframework.bean.factory.config.BeanPostProcessor;
-import org.heisenberg.springframework.bean.factory.config.InstantiationAwareBeanPostProcessor;
+import org.heisenberg.springframework.bean.factory.config.*;
+import org.heisenberg.springframework.core.ConversionService;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -202,12 +202,32 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         }
     }
 
-    protected void applyPropertyValues(String beanName,Object bean,BeanDefinition beanDefinition)
-    {
-        for (PropertyValue propertyValue : beanDefinition.getPropertyValues().getPropertyValues()) {
-            String name = propertyValue.getName();
-            Object value = propertyValue.getValue();
-            // TODO:ok
+    protected void applyPropertyValues(String beanName, Object bean, BeanDefinition beanDefinition) {
+        try {
+            for (PropertyValue propertyValue : beanDefinition.getPropertyValues().getPropertyValues()) {
+                String name = propertyValue.getName();
+                Object value = propertyValue.getValue();
+                if (value instanceof BeanReference) {
+                    // beanA依赖beanB，先实例化beanB
+                    BeanReference beanReference = (BeanReference) value;
+                    value = getBean(beanReference.getBeanName());
+                } else {
+                    //类型转换
+                    Class<?> sourceType = value.getClass();
+                    Class<?> targetType = (Class<?>) TypeUtil.getFieldType(bean.getClass(), name);
+                    ConversionService conversionService = getConversionService();
+                    if (conversionService != null) {
+                        if (conversionService.canConvert(sourceType, targetType)) {
+                            value = conversionService.convert(value, targetType);
+                        }
+                    }
+                }
+
+                //通过反射设置属性
+                BeanUtil.setFieldValue(bean, name, value);
+            }
+        } catch (Exception ex) {
+            throw new BeansException("Error setting property values for bean: " + beanName, ex);
         }
     }
 
