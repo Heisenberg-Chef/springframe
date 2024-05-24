@@ -35,11 +35,11 @@ public class BeanDefinition {
 
     private boolean prototype = false;
 
-    public BeanDefinition(Class beanClass) {
+    public BeanDefinition(Class<?> beanClass) {
         this(beanClass, null);
     }
 
-    public BeanDefinition(Class beanClass, PropertyValues propertyValues) {
+    public BeanDefinition(Class<?> beanClass, PropertyValues propertyValues) {
         this.beanClass = beanClass;
         this.propertyValues = propertyValues != null ? propertyValues : new PropertyValues();
     }
@@ -64,11 +64,11 @@ public class BeanDefinition {
     }
 
 
-    public Class getBeanClass() {
+    public Class<?> getBeanClass() {
         return beanClass;
     }
 
-    public void setBeanClass(Class beanClass) {
+    public void setBeanClass(Class<?> beanClass) {
         this.beanClass = beanClass;
     }
 

@@ -24,7 +24,7 @@ public class App {
 
 
     public static void main(String[] args) throws IOException {
-        URL url = new URL("file:C:\\Users\\A\\Desktop\\mini-spring-main\\pom.xml");
+        URL url = new URL("file:./pom.xml");
         URLConnection urlConnection = url.openConnection(Proxy.NO_PROXY);
 
         InputStream inputStream = urlConnection.getInputStream();

@@ -65,6 +65,7 @@ public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
 
     /**
      * 加入工厂类
+     *
      * @param beanName
      * @param singletonFactory
      */
@@ -74,6 +75,7 @@ public class DefaultSingletonBeanRegistry implements SingletonBeanRegistry {
 
     /**
      * 注入Bean的销毁函数接口
+     *
      * @param beanName
      * @param bean
      */

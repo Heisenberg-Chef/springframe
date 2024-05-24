@@ -1,11 +1,18 @@
 package org.heisenberg.springframework.bean.factory.support;
 
+import cn.hutool.core.util.ClassUtil;
+import cn.hutool.core.util.StrUtil;
 import org.heisenberg.springframework.bean.BeansException;
+import org.heisenberg.springframework.bean.PropertyValue;
+import org.heisenberg.springframework.bean.PropertyValues;
+import org.heisenberg.springframework.bean.factory.InitializingBean;
+import org.heisenberg.springframework.bean.factory.ObjectFactory;
 import org.heisenberg.springframework.bean.factory.config.AutowireCapableBeanFactory;
 import org.heisenberg.springframework.bean.factory.config.BeanDefinition;
 import org.heisenberg.springframework.bean.factory.config.BeanPostProcessor;
 import org.heisenberg.springframework.bean.factory.config.InstantiationAwareBeanPostProcessor;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -26,17 +33,34 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         if (bean != null) {
             return bean;
         }
-        return null;
+        return doCreateBean(beanName, beanDefinition);
     }
 
     @Override
     public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName) throws BeansException {
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                Object result = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessBeforeInstantiation((Class<?>) existingBean, beanName);
+                if (result != null) {
+                    return result;
+                }
+            }
+        }
+
         return null;
     }
 
     @Override
     public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName) throws BeansException {
-        return null;
+        Object result = existingBean;
+        for (BeanPostProcessor processor : getBeanPostProcessors()) {
+            Object current = processor.postProcessAfterInitialization(result, beanName);
+            if (current == null) {
+                return result;
+            }
+            result = current;
+        }
+        return result;
     }
 
     /**
@@ -47,7 +71,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
      * @return
      */
     protected Object resolveBeforeInstantiation(String beanName, BeanDefinition beanDefinition) {
-        return null;
+        Object bean = applyBeanPostProcessorsBeforeInstantiation(beanDefinition.getBeanClass(), beanName);
+        if (bean != null) {
+            bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
+        }
+        return bean;
     }
 
     protected Object applyBeanPostProcessorsBeforeInstantiation(Class<?> beanClass, String beanName) {
@@ -63,35 +91,126 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
         return null;
     }
 
-    protected Object doCreateBean(String beanName,BeanDefinition beanDefinition)
-    {
+    /**
+     * 创建Bean，较为核心的代码
+     *
+     * @param beanName
+     * @param beanDefinition
+     * @return
+     */
+    protected Object doCreateBean(String beanName, BeanDefinition beanDefinition) {
         Object bean;
-        try{
-            bean = createBeanInstance
+        try {
+            bean = createBeanInstance(beanDefinition);
+            // 为了解决循环依赖问题，蒋丽华后的Bean放入缓存中提前暴露
+            if (beanDefinition.isSingleton()) {
+                Object finalBean = bean;
+                addSingletonFactory(beanName, new ObjectFactory<Object>() {
+                    @Override
+                    public Object getObject() throws BeansException {
+                        return getEarlyBeanReference(beanName, beanDefinition, finalBean);
+                    }
+                });
+            }
+
+            // 实例化bean之后执行
+            boolean continueWithPropertyPopulation = applyBeanPostProcessorsAfterInstantiation(beanName, bean);
+            if (!continueWithPropertyPopulation) {
+                return bean;
+            }
+            // 在设置bean属性之前，允许BeanPostProcessor修改属性值
+            applyBeanPostProcessorsBeforeApplyingPropertyValues(beanName, bean, beanDefinition);
+            //为bean填充属性
+            applyPropertyValues(beanName, bean, beanDefinition);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
-
-    protected Object getEarlyBeanReference(String beanName,BeanDefinition beanDefinition,Object bean)
-    {
-        Object exposeObject = bean;
+    /**
+     * 在较早的阶段中，获取Bean的依赖
+     *
+     * @param beanName
+     * @param beanDefinition
+     * @param bean
+     * @return
+     */
+    protected Object getEarlyBeanReference(String beanName, BeanDefinition beanDefinition, Object bean) {
+        Object exposedObject = bean;
         for (BeanPostProcessor bp : getBeanPostProcessors()) {
-            if(bp instanceof InstantiationAwareBeanPostProcessor)
-            {
-
+            if (bp instanceof InstantiationAwareBeanPostProcessor) {
+                exposedObject = ((InstantiationAwareBeanPostProcessor) bp).getEarlyBeanReference(exposedObject, beanName);
+                if (exposedObject == null) {
+                    return exposedObject;
+                }
             }
         }
+
+        return exposedObject;
     }
 
     /**
      * 根据beanDefination
+     *
      * @param beanDefinition
      * @return
      */
-    protected Object createBeanInstance(BeanDefinition beanDefinition)
-    {
+    protected Object createBeanInstance(BeanDefinition beanDefinition) {
         return getInstantiationStrategy().instantiate(beanDefinition);
     }
+
+    protected void invokeInitMethods(String beanName, Object bean, BeanDefinition beanDefinition) throws Exception {
+        if (bean instanceof InitializingBean) {
+            ((InitializingBean) bean).afterPropertiesSet();
+        }
+        // 初始化方法名称
+        String initMethodName = beanDefinition.getInitMethodName();
+        if (StrUtil.isNotEmpty(initMethodName) && !(bean instanceof InitializingBean) && "afterPropertiesSet".equals(initMethodName)) {
+            Method initMethod = ClassUtil.getPublicMethod(beanDefinition.getBeanClass(), initMethodName);
+            if (initMethod == null) {
+                throw new BeansException("Could not find an init method named '" + initMethodName + "' on bean with name '" + beanName + "'");
+            }
+            initMethod.invoke(bean);
+        }
+    }
+
+    private boolean applyBeanPostProcessorsAfterInstantiation(String beanName, Object bean) {
+        boolean continueWithPropertyPopulation = true;
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                if (!((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessAfterInstantiation(bean, beanName)) {
+                    continueWithPropertyPopulation = false;
+                    break;
+                }
+            }
+        }
+        return continueWithPropertyPopulation;
+    }
+
+    protected void applyBeanPostProcessorsBeforeApplyingPropertyValues(String beanName, Object bean, BeanDefinition beanDefinition) throws Exception {
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
+                PropertyValues pvs = ((InstantiationAwareBeanPostProcessor) beanPostProcessor).postProcessPropertyValues(beanDefinition.getPropertyValues(), bean, beanName);
+                if (pvs != null) {
+                    for (PropertyValue propertyValue : pvs.getPropertyValues()) {
+                        beanDefinition.getPropertyValues().addPropertyValue(propertyValue);
+                    }
+                }
+            }
+        }
+    }
+
+    protected void applyPropertyValues(String beanName,Object bean,BeanDefinition beanDefinition)
+    {
+        for (PropertyValue propertyValue : beanDefinition.getPropertyValues().getPropertyValues()) {
+            String name = propertyValue.getName();
+            Object value = propertyValue.getValue();
+            // TODO:ok
+        }
+    }
+
     public InstantiationStrategy getInstantiationStrategy() {
         return instantiationStrategy;
     }
